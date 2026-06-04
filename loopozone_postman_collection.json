@@ -1,0 +1,652 @@
+{
+	"info": {
+		"name": "Loopozone API Suite",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth APIs",
+			"item": [
+				{
+					"name": "Check User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\": \"+919876543210\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/check-user",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "check-user"]
+						}
+					}
+				},
+				{
+					"name": "Signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const res = pm.response.json();",
+									"if (res.token) {",
+									"    pm.collectionVariables.set(\"jwt_token\", res.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+919876543210\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/signup",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "signup"]
+						}
+					}
+				},
+				{
+					"name": "Send OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\": \"+919876543210\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/send-otp",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "send-otp"]
+						}
+					}
+				},
+				{
+					"name": "Verify OTP",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const res = pm.response.json();",
+									"if (res.token) {",
+									"    pm.collectionVariables.set(\"jwt_token\", res.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\": \"+919876543210\",\n    \"otp\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/verify-otp",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "verify-otp"]
+						}
+					}
+				},
+				{
+					"name": "Send Email OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/send-email-otp",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "send-email-otp"]
+						}
+					}
+				},
+				{
+					"name": "Verify Email OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"otp\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/verify-email-otp",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "verify-email-otp"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "KYC APIs",
+			"item": [
+				{
+					"name": "Aadhaar Send OTP",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const res = pm.response.json();",
+									"if (res.referenceId) {",
+									"    pm.collectionVariables.set(\"aadhaar_ref_id\", res.referenceId);",
+									"}",
+									"if (res.devOtp) {",
+									"    pm.collectionVariables.set(\"aadhaar_otp\", res.devOtp);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"aadhaarNumber\": \"123456789012\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/kyc/aadhaar/send-otp",
+							"host": ["{{baseUrl}}"],
+							"path": ["kyc", "aadhaar", "send-otp"]
+						}
+					}
+				},
+				{
+					"name": "Aadhaar Verify OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"otp\": \"{{aadhaar_otp}}\",\n    \"referenceId\": \"{{aadhaar_ref_id}}\",\n    \"aadhaarNumber\": \"123456789012\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/kyc/aadhaar/verify-otp",
+							"host": ["{{baseUrl}}"],
+							"path": ["kyc", "aadhaar", "verify-otp"]
+						}
+					}
+				},
+				{
+					"name": "PAN Verify",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "pan", "value": "ODZPS8086J", "type": "text" },
+								{ "key": "panImage", "type": "file", "src": [] }
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/kyc/pan/verify",
+							"host": ["{{baseUrl}}"],
+							"path": ["kyc", "pan", "verify"]
+						}
+					}
+				},
+				{
+					"name": "GST Verify",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "gstNumber", "value": "29ABCDE1234F1Z5", "type": "text" },
+								{ "key": "gst", "type": "file", "src": [] }
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/kyc/gst/verify",
+							"host": ["{{baseUrl}}"],
+							"path": ["kyc", "gst", "verify"]
+						}
+					}
+				},
+				{
+					"name": "Selfie Upload",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "selfie", "type": "file", "src": [] }
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/kyc/selfie",
+							"host": ["{{baseUrl}}"],
+							"path": ["kyc", "selfie"]
+						}
+					}
+				},
+				{
+					"name": "Get KYC Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/kyc/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["kyc", "status"]
+						}
+					}
+				},
+				{
+					"name": "Submit KYC",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/kyc/submit",
+							"host": ["{{baseUrl}}"],
+							"path": ["kyc", "submit"]
+						}
+					}
+				},
+				{
+					"name": "Reupload Reset",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/kyc/reupload",
+							"host": ["{{baseUrl}}"],
+							"path": ["kyc", "reupload"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin APIs",
+			"item": [
+				{
+					"name": "Admin Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const res = pm.response.json();",
+									"if (res.token) {",
+									"    pm.collectionVariables.set(\"admin_token\", res.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@loopozone.com\",\n    \"password\": \"Admin@123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "login"]
+						}
+					}
+				},
+				{
+					"name": "Get Pending KYC",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/kyc/pending",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "kyc", "pending"]
+						}
+					}
+				},
+				{
+					"name": "Get User Document Detail",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/kyc/user/:userId",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "kyc", "user", ":userId"],
+							"variable": [
+								{ "key": "userId", "value": "" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Approve KYC",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/kyc/approve/:userId",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "kyc", "approve", ":userId"],
+							"variable": [
+								{ "key": "userId", "value": "" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Reject KYC",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"reason\": \"PAN card image is blurry and unreadable.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/kyc/reject/:userId",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "kyc", "reject", ":userId"],
+							"variable": [
+								{ "key": "userId", "value": "" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Get All KYC Records",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/kyc/all",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "kyc", "all"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin Prices CMS",
+			"item": [
+				{
+					"name": "Create Price Record",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"materialName\": \"Copper Wire\",\n    \"pricePerKg\": 450,\n    \"city\": \"Mumbai\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/prices",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "prices"]
+						}
+					}
+				},
+				{
+					"name": "Fetch Admin Prices",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/prices",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "prices"]
+						}
+					}
+				},
+				{
+					"name": "Update Price Record",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"pricePerKg\": 455\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/prices/:priceId",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "prices", ":priceId"],
+							"variable": [
+								{ "key": "priceId", "value": "" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Price Record",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/prices/:priceId",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "prices", ":priceId"],
+							"variable": [
+								{ "key": "priceId", "value": "" }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin Categories CMS",
+			"item": [
+				{
+					"name": "Create Category",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"E-Waste\",\n    \"description\": \"Electronics, Batteries\",\n    \"icon\": \"zap\",\n    \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "categories"]
+						}
+					}
+				},
+				{
+					"name": "Fetch Admin Categories",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "categories"]
+						}
+					}
+				},
+				{
+					"name": "Update Category",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"isActive\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/categories/:categoryId",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "categories", ":categoryId"],
+							"variable": [
+								{ "key": "categoryId", "value": "" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Category",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/categories/:categoryId",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "categories", ":categoryId"],
+							"variable": [
+								{ "key": "categoryId", "value": "" }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Public CMS Data APIs",
+			"item": [
+				{
+					"name": "Get Public Prices",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/prices",
+							"host": ["{{baseUrl}}"],
+							"path": ["prices"]
+						}
+					}
+				},
+				{
+					"name": "Get Public Categories",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["categories"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "User APIs",
+			"item": [
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/profile",
+							"host": ["{{baseUrl}}"],
+							"path": ["user", "profile"]
+						}
+					}
+				},
+				{
+					"name": "Get Dashboard Data",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/dashboard",
+							"host": ["{{baseUrl}}"],
+							"path": ["user", "dashboard"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{ "key": "baseUrl", "value": "http://192.168.0.82:3000" },
+		{ "key": "jwt_token", "value": "" },
+		{ "key": "admin_token", "value": "" },
+		{ "key": "aadhaar_ref_id", "value": "" },
+		{ "key": "aadhaar_otp", "value": "" }
+	]
+}
