@@ -123,7 +123,11 @@ const userSchema = new mongoose.Schema({
 
    panImage:String,
 
-   gstImage:String
+   gstImage:String,
+
+   refreshTokens: [{
+      type: String
+   }]
 
 },{timestamps:true});
 

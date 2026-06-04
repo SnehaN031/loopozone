@@ -9,6 +9,7 @@ const protect = async (req, res, next) => {
     }
 
     if (!token) {
+      console.warn(`[AUTH WARNING] Blocked request to ${req.method} ${req.originalUrl} - No token provided.`);
       return res.status(401).json({ success: false, error: 'Access denied. No token provided.' });
     }
 
@@ -16,11 +17,13 @@ const protect = async (req, res, next) => {
       const decoded = jwtHelper.verifyToken(token);
       const user = await User.findById(decoded.userId);
       if (!user) {
+        console.warn(`[AUTH WARNING] Blocked request to ${req.method} ${req.originalUrl} - User with ID ${decoded.userId} no longer exists.`);
         return res.status(401).json({ success: false, error: 'User no longer exists.' });
       }
       req.user = user;
       next();
     } catch (err) {
+      console.warn(`[AUTH WARNING] Blocked request to ${req.method} ${req.originalUrl} - Invalid or expired token. Error: ${err.message}`);
       return res.status(401).json({ success: false, error: 'Invalid or expired token.' });
     }
   } catch (error) {

@@ -71,19 +71,23 @@ const signup = async (req, res, next) => {
       kycStatus: 'pending'
     });
 
-    await newUser.save();
-
-    // Generate JWT token for temporary onboarding session
+    // Generate access & refresh tokens
     const token = jwtHelper.signToken({
       userId: newUser._id,
+      email: newUser.email,
       phone: newUser.phone,
       isKycVerified: newUser.isKycVerified
     });
+    const refreshToken = jwtHelper.signRefreshToken({ userId: newUser._id });
+
+    newUser.refreshTokens.push(refreshToken);
+    await newUser.save();
 
     return res.status(201).json({
       success: true,
       message: 'Signup successful',
       token,
+      refreshToken,
       user: {
         _id: newUser._id,
         name: newUser.name,
@@ -123,6 +127,7 @@ const sendOTP = async (req, res, next) => {
         // Generate temporary JWT token for onboarding/reupload access
         const token = jwtHelper.signToken({
           userId: user._id,
+          email: user.email,
           phone: user.phone,
           isKycVerified: user.isKycVerified
         });
@@ -172,13 +177,19 @@ const verifyOTP = async (req, res, next) => {
 
     const token = jwtHelper.signToken({
       userId: user._id,
+      email: user.email,
       phone: user.phone,
       isKycVerified: user.isKycVerified
     });
+    const refreshToken = jwtHelper.signRefreshToken({ userId: user._id });
+
+    user.refreshTokens.push(refreshToken);
+    await user.save();
 
     return res.status(200).json({
       success: true,
       token,
+      refreshToken,
       user: {
         _id: user._id,
         name: user.name,
@@ -197,13 +208,17 @@ const verifyOTP = async (req, res, next) => {
 };
 
 const sendEmailOtpHandler = async (req, res, next) => {
+  console.log(`[EMAIL OTP] [HIT] Request to send-email-otp for user ID: ${req.user?._id}, email: ${req.user?.email}`);
   try {
     if (!req.user || !req.user.email) {
+      console.error(`[EMAIL OTP] [ERROR] Blocked send-email-otp - User profile email not populated. User ID: ${req.user?._id}`);
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
     const result = await emailOtpService.sendEmailOTP(req.user.email);
+    console.log(`[EMAIL OTP] [SUCCESS] Email OTP sent successfully to ${req.user.email}`);
     return res.status(200).json(result);
   } catch (error) {
+    console.error(`[EMAIL OTP] [ERROR] Failed to send Email OTP to ${req.user?.email || 'unknown'}. Error: ${error.message}`);
     next(error);
   }
 };
@@ -236,11 +251,69 @@ const verifyEmailOtpHandler = async (req, res, next) => {
   }
 };
 
+const refreshTokenHandler = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(400).json({ success: false, error: 'Refresh token is required' });
+    }
+
+    let decoded;
+    try {
+      decoded = jwtHelper.verifyRefreshToken(refreshToken);
+    } catch (err) {
+      return res.status(401).json({ success: false, error: 'Invalid or expired refresh token' });
+    }
+
+    const user = await User.findById(decoded.userId);
+    if (!user || !user.refreshTokens.includes(refreshToken)) {
+      return res.status(401).json({ success: false, error: 'Invalid or revoked refresh token' });
+    }
+
+    const newToken = jwtHelper.signToken({
+      userId: user._id,
+      email: user.email,
+      phone: user.phone,
+      isKycVerified: user.isKycVerified
+    });
+    const newRefreshToken = jwtHelper.signRefreshToken({ userId: user._id });
+
+    user.refreshTokens = user.refreshTokens.filter(t => t !== refreshToken);
+    user.refreshTokens.push(newRefreshToken);
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      token: newToken,
+      refreshToken: newRefreshToken
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const logout = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+    if (refreshToken) {
+      await User.updateOne(
+        { _id: req.user.id },
+        { $pull: { refreshTokens: refreshToken } }
+      );
+    }
+    return res.status(200).json({ success: true, message: 'Logged out successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   checkUser,
   signup,
   sendOTP,
   verifyOTP,
   sendEmailOtpHandler,
-  verifyEmailOtpHandler
+  verifyEmailOtpHandler,
+  refreshTokenHandler,
+  logout
 };
