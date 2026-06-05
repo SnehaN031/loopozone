@@ -5,6 +5,30 @@ const sandboxService = require('../services/sandboxService');
 const aadhaarService = require('../services/aadhaarService');
 const ocrService = require('../services/ocrService');
 
+const createKycNotification = async (user) => {
+  try {
+    const Notification = require('../models/Notification');
+    const existing = await Notification.findOne({
+      referenceId: user._id,
+      type: 'KYC_SUBMITTED',
+      recipientType: 'ADMIN',
+      isRead: false
+    });
+    if (!existing) {
+      await Notification.create({
+        title: 'KYC Review Pending',
+        message: `${user.name} (${user.phone}) has submitted documents for approval.`,
+        type: 'KYC_SUBMITTED',
+        recipientType: 'ADMIN',
+        referenceId: user._id
+      });
+      console.log(`[NOTIFICATION] Generated KYC submission notification for user: ${user.phone}`);
+    }
+  } catch (err) {
+    console.warn('[NOTIFICATION WARNING] Failed to create KYC notification:', err.message);
+  }
+};
+
 const checkKycCompletion = async (user) => {
   if (
     user.aadhaarVerified &&
@@ -16,6 +40,7 @@ const checkKycCompletion = async (user) => {
     user.isKycVerified = false
     await user.save()
     console.log('[KYC] Onboarding docs complete, pending admin review:', user.phone)
+    await createKycNotification(user);
     return { pendingReview: true }
   }
 
@@ -152,6 +177,9 @@ const normalizePAN = (pan) => {
 
 const verifyPan = async (req, res, next) => {
   try {
+    if (req.files && req.files.length > 0) {
+      req.file = req.files.find(f => (f.fieldname || '').toLowerCase().includes('pan')) || req.files[0];
+    }
 
     // Step 1: Image is mandatory
     if (!req.file) {
@@ -278,6 +306,9 @@ const verifyPan = async (req, res, next) => {
 // POST /kyc/gst/verify
 const uploadGst = async (req, res, next) => {
   try {
+    if (req.files && req.files.length > 0) {
+      req.file = req.files.find(f => (f.fieldname || '').toLowerCase().includes('gst')) || req.files[0];
+    }
 
     // Step 1: Check file uploaded
     if (!req.file) {
@@ -390,6 +421,9 @@ const uploadGst = async (req, res, next) => {
 // POST /kyc/selfie
 const uploadSelfie = async (req, res, next) => {
   try {
+    if (req.files && req.files.length > 0) {
+      req.file = req.files.find(f => (f.fieldname || '').toLowerCase().includes('selfie')) || req.files[0];
+    }
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'Please upload selfie image file' });
     }
@@ -416,8 +450,10 @@ const uploadSelfie = async (req, res, next) => {
 
 const getKycStatus = async (req, res, next) => {
   try {
+    console.log(`[DEBUG] [KYC] Checking KYC status checklist for user ID: ${req.user.id} (${req.user.phone})`);
     const user = await User.findById(req.user.id)
     if (!user) {
+      console.warn(`[DEBUG] [KYC] User not found for ID: ${req.user.id}`);
       return res.status(404).json({
         success: false,
         error: 'User not found'
@@ -436,6 +472,9 @@ const getKycStatus = async (req, res, next) => {
     const totalSteps = 4
     const completedSteps = Object.values(documents)
       .filter(v => v === 'verified').length
+
+    console.log(`[DEBUG] [KYC] User: ${user.phone} | KYC Status: ${user.kycStatus} | Progress: ${completedSteps}/${totalSteps} (${Math.round((completedSteps / totalSteps) * 100)}%)`);
+    console.log(`[DEBUG] [KYC] Documents Checklist -> Aadhaar: ${documents.aadhaar} | PAN: ${documents.pan} | GST: ${documents.gst} | Selfie: ${documents.selfie}`);
 
     return res.status(200).json({
       success: true,
@@ -560,6 +599,8 @@ const submitKyc = async (req, res, next) => {
     await user.save();
 
     console.log('[KYC] User explicitly submitted onboarding:', user.phone);
+
+    await createKycNotification(user);
 
     return res.status(200).json({
       success: true,

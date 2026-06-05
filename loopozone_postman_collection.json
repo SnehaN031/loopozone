@@ -35,6 +35,9 @@
 									"const res = pm.response.json();",
 									"if (res.token) {",
 									"    pm.collectionVariables.set(\"jwt_token\", res.token);",
+									"}",
+									"if (res.refreshToken) {",
+									"    pm.collectionVariables.set(\"refresh_token\", res.refreshToken);",
 									"}"
 								],
 								"type": "text/javascript"
@@ -62,7 +65,8 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
 						],
 						"body": {
 							"mode": "raw",
@@ -85,6 +89,9 @@
 									"const res = pm.response.json();",
 									"if (res.token) {",
 									"    pm.collectionVariables.set(\"jwt_token\", res.token);",
+									"}",
+									"if (res.refreshToken) {",
+									"    pm.collectionVariables.set(\"refresh_token\", res.refreshToken);",
 									"}"
 								],
 								"type": "text/javascript"
@@ -137,6 +144,60 @@
 							"raw": "{{baseUrl}}/auth/verify-email-otp",
 							"host": ["{{baseUrl}}"],
 							"path": ["auth", "verify-email-otp"]
+						}
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const res = pm.response.json();",
+									"if (res.token) {",
+									"    pm.collectionVariables.set(\"jwt_token\", res.token);",
+									"}",
+									"if (res.refreshToken) {",
+									"    pm.collectionVariables.set(\"refresh_token\", res.refreshToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refreshToken\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/refresh",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "refresh"]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refreshToken\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "logout"]
 						}
 					}
 				}
@@ -303,6 +364,25 @@
 							"path": ["kyc", "reupload"]
 						}
 					}
+				},
+				{
+					"name": "Set Seller Type",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"sellerType\": \"individual\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/kyc/seller-type",
+							"host": ["{{baseUrl}}"],
+							"path": ["kyc", "seller-type"]
+						}
+					}
 				}
 			]
 		},
@@ -422,6 +502,25 @@
 							"raw": "{{baseUrl}}/admin/kyc/all",
 							"host": ["{{baseUrl}}"],
 							"path": ["admin", "kyc", "all"]
+						}
+					}
+				},
+				{
+					"name": "Create Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"New Admin\",\n    \"email\": \"newadmin@loopozone.com\",\n    \"password\": \"Admin@123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/admin/create",
+							"host": ["{{baseUrl}}"],
+							"path": ["admin", "create"]
 						}
 					}
 				}
@@ -643,8 +742,9 @@
 		}
 	],
 	"variable": [
-		{ "key": "baseUrl", "value": "http://192.168.0.82:3000" },
+		{ "key": "baseUrl", "value": "http://localhost:5000" },
 		{ "key": "jwt_token", "value": "" },
+		{ "key": "refresh_token", "value": "" },
 		{ "key": "admin_token", "value": "" },
 		{ "key": "aadhaar_ref_id", "value": "" },
 		{ "key": "aadhaar_otp", "value": "" }

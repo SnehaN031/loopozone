@@ -50,10 +50,18 @@ const login = async (req, res, next) => {
 // GET /admin/kyc/pending
 const getPendingUsers = async (req, res, next) => {
   try {
+    console.log(`[DEBUG] [ADMIN] Fetching pending KYC users list... Requested by Admin ID: ${req.admin ? req.admin.adminId : 'unknown'}`);
     const users = await User.find(
       { kycStatus: 'pending_review' },
       '_id name phone email sellerType aadhaarVerified panVerified gstVerified selfieImage panImage gstImage aadhaarNumber panNumber gstNumber createdAt kycStatus'
     ).sort({ createdAt: 1 })
+
+    console.log(`[DEBUG] [ADMIN] Found ${users.length} user(s) pending KYC review.`);
+    if (users.length > 0) {
+      users.forEach((u, i) => {
+        console.log(`  ${i + 1}. User ID: ${u._id} | Name: ${u.name} | Phone: ${u.phone} | SellerType: ${u.sellerType}`);
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -121,6 +129,21 @@ const approveKYC = async (req, res, next) => {
 
     await user.save()
 
+    // Create user notification
+    try {
+      const Notification = require('../models/Notification');
+      await Notification.create({
+        title: 'KYC Verified Successfully',
+        message: 'Congratulations, your KYC has been verified. You can now start trading!',
+        type: 'KYC_APPROVED',
+        recipientType: 'USER',
+        userId: user._id
+      });
+      console.log(`[NOTIFICATION] Generated KYC approved notification for user: ${user.phone}`);
+    } catch (notifErr) {
+      console.warn('[NOTIFICATION WARNING] Failed to create KYC approval notification:', notifErr.message);
+    }
+
     const dynamicUsername = user.email ? user.email.split('@')[0] : user.name.toLowerCase().replace(/\s+/g, '_');
     const dynamicPassword = `${dynamicUsername}_password_${user.phone ? user.phone.slice(-2) : '99'}`;
 
@@ -176,6 +199,21 @@ const rejectKYC = async (req, res, next) => {
     user.reviewedBy = req.admin.adminId
 
     await user.save()
+
+    // Create user notification
+    try {
+      const Notification = require('../models/Notification');
+      await Notification.create({
+        title: 'KYC Verification Failed',
+        message: `Your KYC submission was rejected. Reason: ${user.rejectionReason}. Please re-upload corrected documents.`,
+        type: 'KYC_REJECTED',
+        recipientType: 'USER',
+        userId: user._id
+      });
+      console.log(`[NOTIFICATION] Generated KYC rejected notification for user: ${user.phone}`);
+    } catch (notifErr) {
+      console.warn('[NOTIFICATION WARNING] Failed to create KYC rejection notification:', notifErr.message);
+    }
 
     return res.status(200).json({
       success: true,

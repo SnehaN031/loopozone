@@ -1,0 +1,8 @@
+{
+  "remote.portsAttributes": {
+    "5000": {
+      "label": "Loopozone Backend",
+      "visibility": "public"
+    }
+  }
+}

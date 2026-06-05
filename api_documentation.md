@@ -10,17 +10,17 @@ This document provides the complete API specifications, payload details, and sam
 3. [KYC Document Upload & Verification (CRUD)](#3-kyc-document-upload--verification-crud)
 4. [Compliance Admin Endpoints](#4-compliance-admin-endpoints)
 5. [User profile & Dashboard](#5-user-profile--dashboard)
-6. [Complete Endpoint Reference List](#6-complete-endpoint-reference-list)
+6. [Prices & Categories CMS Endpoints](#6-prices--categories-cms-endpoints)
+7. [Complete Endpoint Reference List](#7-complete-endpoint-reference-list)
 
 ---
 
 ## 1. Overview & Authentication
 * **Base URL**: `http://localhost:5000`
 * **Static Assets**: Accessible under `/uploads/...` (e.g., `http://localhost:5000/uploads/pan/pan-1780.jpg`)
-* **Headers**: All protected endpoints require a bearer token:
-  ```http
-  Authorization: Bearer <JWT_TOKEN>
-  ```
+* **Token Structure**:
+  * **Access Token**: Short-lived (expires in 15 minutes). Sent in the `Authorization: Bearer <ACCESS_TOKEN>` header for protected endpoints.
+  * **Refresh Token**: Long-lived (expires in 7 days). Used to request a new access token when it expires.
 
 ---
 
@@ -69,7 +69,8 @@ Registers a new user and generates a temporary JWT session.
   {
     "success": true,
     "message": "Signup successful",
-    "token": "eyJhbGciOiJIUzI1NiIsIn...",
+    "token": "eyJhbGciOiJIUzI1NiIsIn...",        // Access Token
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsIn...", // Refresh Token
     "user": {
       "_id": "6a1e80e13316b9f5...",
       "name": "Kavya Madhavan",
@@ -83,9 +84,10 @@ Registers a new user and generates a temporary JWT session.
   }
   ```
 
-### Send Phone OTP
+### Send Phone OTP (Protected)
 Generates and stores a login OTP for the entered phone number.
 * **Method & Path**: `POST /auth/send-otp`
+* **Headers**: `Authorization: Bearer <ACCESS_TOKEN>`
 * **Request Payload (JSON)**:
   ```json
   {
@@ -133,7 +135,8 @@ Verifies the 6-digit OTP code and issues a secure JWT token.
   ```json
   {
     "success": true,
-    "token": "eyJhbGciOiJIUzI1NiIsIn...",
+    "token": "eyJhbGciOiJIUzI1NiIsIn...",        // Access Token
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsIn...", // Refresh Token
     "user": {
       "_id": "6a1e80e13316b9f5...",
       "name": "Kavya Madhavan",
@@ -182,6 +185,42 @@ Verifies the email verification code.
       "isKycVerified": false,
       "kycStatus": "pending"
     }
+  }
+  ```
+
+### Refresh Access Token
+Request a new access token using a valid, non-expired refresh token.
+* **Method & Path**: `POST /auth/refresh`
+* **Request Payload (JSON)**:
+  ```json
+  {
+    "refreshToken": "<YOUR_CURRENT_REFRESH_TOKEN>"
+  }
+  ```
+* **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "token": "<NEW_ACCESS_TOKEN>",
+    "refreshToken": "<NEW_REFRESH_TOKEN>"
+  }
+  ```
+
+### Logout / Revoke Session (Protected)
+Invalidates the current session by removing the refresh token from the database.
+* **Method & Path**: `POST /auth/logout`
+* **Headers**: `Authorization: Bearer <ACCESS_TOKEN>`
+* **Request Payload (JSON)**:
+  ```json
+  {
+    "refreshToken": "<YOUR_CURRENT_REFRESH_TOKEN>"
+  }
+  ```
+* **Success Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Logged out successfully"
   }
   ```
 
@@ -263,7 +302,6 @@ Uploads GST certificate and validates GSTIN matching rules.
     "message": "GST certificate verified successfully",
     "data": {
       "gstin": "22AAAAA1111A1Z1",
-      "panMatch": true,
       "gstinMatch": true
     }
   }
@@ -416,6 +454,8 @@ Retrieves full details and file paths for auditing.
       "email": "kavya@example.com",
       "kycStatus": "pending_review",
       "sellerType": "individual",
+      "username": "kavya",
+      "password": "kavya_password_10",
       "documents": {
         "aadhaar": "XXXXXXXX9012",
         "pan": "/uploads/pan/pan-1780.png",
@@ -436,9 +476,14 @@ Retrieves full details and file paths for auditing.
     "user": {
       "_id": "6a1e80e13316b9f5...",
       "name": "Kavya Madhavan",
+      "email": "kavya@example.com",
       "phone": "+919876543210",
       "kycStatus": "approved",
-      "isKycVerified": true
+      "isKycVerified": true,
+      "username": "kavya",
+      "password": "kavya_password_10",
+      "aadhaarNumber": "XXXXXXXX9012",
+      "panNumber": "ODZPS8086J"
     }
   }
   ```
@@ -463,6 +508,32 @@ Retrieves full details and file paths for auditing.
       "phone": "+919876543210",
       "kycStatus": "rejected",
       "rejectionReason": "PAN card photo is blurry and unreadable."
+    }
+  }
+  ```
+
+### Create Admin Account
+Create a new administrator account (requires existing admin authorization).
+* **Method & Path**: `POST /admin/create`
+* **Headers**: `Authorization: Bearer <ADMIN_JWT>`
+* **Request Payload (JSON)**:
+  ```json
+  {
+    "name": "Jane Smith",
+    "email": "janesmith@loopozone.com",
+    "password": "SecurePassword123"
+  }
+  ```
+* **Success Response (201 Created)**:
+  ```json
+  {
+    "success": true,
+    "message": "Admin created",
+    "admin": {
+      "_id": "6a2001016a6a0c3515e38b6d",
+      "name": "Jane Smith",
+      "email": "janesmith@loopozone.com",
+      "role": "admin"
     }
   }
   ```
@@ -679,10 +750,12 @@ Only accessible to approved/verified users.
 ```text
 /auth/check-user                 POST   – Check if phone number is registered
 /auth/signup                     POST   – Register new profile & get temp JWT
-/auth/send-otp                   POST   – Send login OTP (blocked for pending/rejected)
+/auth/send-otp                   POST   – Send login OTP (protected - requires JWT)
 /auth/verify-otp                 POST   – Verify login OTP & retrieve access JWT
 /auth/send-email-otp            POST   – Send OTP to email (protected)
 /auth/verify-email-otp          POST   – Verify email OTP (protected)
+/auth/refresh                    POST   – Refresh access token using refresh token
+/auth/logout                     POST   – Logout and revoke refresh token (protected)
 
 /kyc/aadhaar/send-otp          POST   – Trigger Aadhaar Send OTP
 /kyc/aadhaar/verify-otp        POST   – Submit OTP for Aadhaar verification

@@ -10,9 +10,14 @@ router.use(protect);
 
 router.post('/aadhaar/send-otp', kycController.sendAadhaarOtp);
 router.post('/aadhaar/verify-otp', kycController.verifyAadhaarOtp);
-router.post('/pan/verify', upload.single('panImage'), kycController.verifyPan);
-router.post('/gst/verify', upload.single('gst'), kycController.uploadGst);
-router.post('/selfie', upload.single('selfie'), kycController.uploadSelfie);
+router.post('/pan/verify', upload.any(), kycController.verifyPan);
+router.post('/upload-pan', upload.any(), kycController.verifyPan);
+
+router.post('/gst/verify', upload.any(), kycController.uploadGst);
+router.post('/upload-gst', upload.any(), kycController.uploadGst);
+
+router.post('/selfie', upload.any(), kycController.uploadSelfie);
+router.post('/upload-selfie', upload.any(), kycController.uploadSelfie);
 router.post('/seller-type', kycController.updateSellerType);
 router.get('/status', kycController.getKycStatus);
 router.post('/reupload', kycController.reuploadKYC);

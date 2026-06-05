@@ -125,9 +125,89 @@ const userSchema = new mongoose.Schema({
 
    gstImage:String,
 
-   refreshTokens: [{
-      type: String
-   }]
+    refreshTokens: [{
+       type: String
+    }],
+
+    role: {
+       type: String,
+       enum: ['buyer', 'seller'],
+       default: 'seller'
+    },
+
+    membershipType: {
+       type: String,
+       default: 'Standard Member'
+    },
+
+    sellerLevel: {
+       type: String,
+       default: 'Bronze Seller'
+    },
+
+    wallet: {
+       balance: { type: Number, default: 0 },
+       totalEarnings: { type: Number, default: 0 },
+       withdrawnAmount: { type: Number, default: 0 },
+       pendingSettlement: { type: Number, default: 0 }
+    },
+
+    ordersSummary: {
+       total: { type: Number, default: 0 },
+       pending: { type: Number, default: 0 },
+       processing: { type: Number, default: 0 },
+       completed: { type: Number, default: 0 },
+       cancelled: { type: Number, default: 0 }
+    },
+
+    ratingsSummary: {
+       averageRating: { type: Number, default: 4.8 },
+       totalReviews: { type: Number, default: 0 },
+       distribution: {
+          5: { type: Number, default: 0 },
+          4: { type: Number, default: 0 },
+          3: { type: Number, default: 0 },
+          2: { type: Number, default: 0 },
+          1: { type: Number, default: 0 }
+       }
+    },
+
+    recentActivity: [{
+       title: String,
+       description: String,
+       timestamp: { type: Date, default: Date.now }
+    }],
+
+    savedAddresses: [{
+       title: String,
+       addressLine: String,
+       city: String,
+       state: String,
+       pincode: String
+    }],
+
+    languagePreference: {
+       type: String,
+       default: 'English'
+    },
+
+    notificationPreferences: {
+       emailNotifications: { type: Boolean, default: true },
+       smsNotifications: { type: Boolean, default: true },
+       pushNotifications: { type: Boolean, default: true },
+       orderUpdates: { type: Boolean, default: true },
+       walletUpdates: { type: Boolean, default: true },
+       promotionalUpdates: { type: Boolean, default: false }
+    },
+
+    securitySettings: {
+       twoFactorEnabled: { type: Boolean, default: false },
+       activeSessions: [{
+          device: String,
+          ip: String,
+          lastActive: { type: Date, default: Date.now }
+       }]
+    }
 
 },{timestamps:true});
 

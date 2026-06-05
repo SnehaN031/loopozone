@@ -7,9 +7,16 @@ const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let subfolder = 'aadhaar';
-    if (file.fieldname === 'pan' || file.fieldname === 'panImage') subfolder = 'pan';
-    if (file.fieldname === 'gst' || file.fieldname === 'gstCertificate') subfolder = 'gst';
-    if (file.fieldname === 'selfie') subfolder = 'selfie';
+    const fieldname = (file.fieldname || '').toLowerCase();
+    const url = (req.originalUrl || req.url || '').toLowerCase();
+
+    if (fieldname.includes('pan') || url.includes('/pan') || url.includes('upload-pan')) {
+      subfolder = 'pan';
+    } else if (fieldname.includes('gst') || url.includes('/gst') || url.includes('upload-gst')) {
+      subfolder = 'gst';
+    } else if (fieldname.includes('selfie') || url.includes('/selfie') || url.includes('upload-selfie')) {
+      subfolder = 'selfie';
+    }
 
     const targetDir = path.join(uploadDir, subfolder);
     if (!fs.existsSync(targetDir)) {

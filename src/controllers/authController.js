@@ -83,6 +83,28 @@ const signup = async (req, res, next) => {
     newUser.refreshTokens.push(refreshToken);
     await newUser.save();
 
+    // Create admin & user welcome notifications
+    try {
+      const Notification = require('../models/Notification');
+      await Notification.create({
+        title: 'New User Registered',
+        message: `${newUser.name} (${newUser.phone}) signed up.`,
+        type: 'NEW_USER',
+        recipientType: 'ADMIN',
+        referenceId: newUser._id
+      });
+      await Notification.create({
+        title: 'Welcome to Loopozone!',
+        message: `Hi ${newUser.name}, thank you for signing up. Please verify your KYC documents to get started.`,
+        type: 'WELCOME',
+        recipientType: 'USER',
+        userId: newUser._id
+      });
+      console.log(`[NOTIFICATION] Generated signup & welcome notifications for user: ${newUser.phone}`);
+    } catch (notifErr) {
+      console.warn('[NOTIFICATION WARNING] Failed to create signup notifications:', notifErr.message);
+    }
+
     return res.status(201).json({
       success: true,
       message: 'Signup successful',

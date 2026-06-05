@@ -43,11 +43,22 @@ app.get('/health', (req, res) => {
   });
 });
 
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Welcome to Loopozone API Platform Service Backend',
+    version: '1.0.0',
+    health: '/health'
+  });
+});
+
 // Mount routes
 app.use('/auth', require('./src/routes/auth.routes'));
 app.use('/kyc', require('./src/routes/kyc.routes'));
 app.use('/user', require('./src/routes/user.routes'));
+app.use('/user/notifications', require('./src/routes/userNotification.routes'));
 app.use('/admin', require('./src/routes/admin.routes'));
+app.use('/admin/notifications', require('./src/routes/notification.routes'));
 app.use('/prices', require('./src/routes/price.routes'));
 app.use('/categories', require('./src/routes/category.routes'));
 

@@ -2,6 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const { protect } = require('../middleware/verifyJWT');
+const { otpLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ router.post('/signup', [
   body('phone').notEmpty()
 ], authController.signup);
 
-router.post('/send-otp', protect, [
+router.post('/send-otp', otpLimiter, [
   body('phone').notEmpty()
 ], authController.sendOTP);
 
@@ -26,7 +27,7 @@ router.post('/verify-otp', [
 
 // Email OTP verification endpoints (JWT protected)
 
-router.post('/send-email-otp', protect, authController.sendEmailOtpHandler);
+router.post('/send-email-otp', protect, otpLimiter, authController.sendEmailOtpHandler);
 router.post('/verify-email-otp', protect, [
   protect,
   body('otp').isLength({ min: 6, max: 6 })
